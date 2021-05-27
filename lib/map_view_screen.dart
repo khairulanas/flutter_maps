@@ -34,6 +34,27 @@ class _MapViewState extends State<MapView> {
                 mapController = controller;
               },
             ),
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: ClipOval(
+                child: Material(
+                  color: Colors.orange[100], // button color
+                  child: InkWell(
+                    splashColor: Colors.orange, // inkwell color
+                    child: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: Icon(Icons.my_location),
+                    ),
+                    onTap: () {
+                      // TODO: Add the operation to be performed
+                      // on button tap
+                    },
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
