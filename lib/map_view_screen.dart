@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapView extends StatefulWidget {
@@ -7,16 +9,89 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
+  GoogleMapController? mapController;
+  final Geolocator _geolocator = Geolocator();
+  CameraPosition _initialLocation = CameraPosition(target: LatLng(0.0, 0.0));
+  late Position _currentPosition;
+
+  final startAddressController = TextEditingController();
+
+  // Method for retrieving the current location
+  Future<void> _getCurrentLocation() async {
+    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
+        .then((Position position) async {
+      setState(() {
+        // Store the position in the variable
+        _currentPosition = position;
+
+        print('CURRENT POS: $_currentPosition');
+
+        // For moving the camera to current location
+        mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(position.latitude, position.longitude),
+              zoom: 18.0,
+            ),
+          ),
+        );
+      });
+    }).catchError((e) {
+      print(e);
+    });
+  }
+
+  void _onPointMapTap() {
+    _getCurrentLocation();
+    mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(
+            // Will be fetching in the next step
+            _currentPosition.latitude,
+            _currentPosition.longitude,
+          ),
+          zoom: 18.0,
+        ),
+      ),
+    );
+  }
+
+  // _getAddress() async {
+  //   try {
+  //     // Places are retrieved using the coordinates
+  //     List<Placemark> p = await Geolocator.placemarkFromCoordinates(
+  //         _currentPosition.latitude, _currentPosition.longitude);
+
+  //     // Taking the most probable result
+  //     Placemark place = p[0];
+
+  //     setState(() {
+  //       // Structuring the address
+  //       _currentAddress =
+  //           "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
+
+  //       // Update the text of the TextField
+  //       startAddressController.text = _currentAddress;
+
+  //       // Setting the user's present location as the starting address
+  //       _startAddress = _currentAddress;
+  //     });
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
+
+  @override
+  void initState() async {
+    super.initState();
+    _getCurrentLocation().then((_) => _onPointMapTap());
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Determining the screen width & height
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
-
-    GoogleMapController mapController;
-
-    CameraPosition _initialLocation = CameraPosition(target: LatLng(0.0, 0.0));
-
     return Container(
       height: height,
       width: width,
@@ -48,8 +123,7 @@ class _MapViewState extends State<MapView> {
                       child: Icon(Icons.my_location),
                     ),
                     onTap: () {
-                      // TODO: Add the operation to be performed
-                      // on button tap
+                      _onPointMapTap();
                     },
                   ),
                 ),
