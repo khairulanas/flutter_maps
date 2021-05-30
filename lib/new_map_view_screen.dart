@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_maps/src/location_util.dart';
 import 'package:flutter_maps/widget/my_location_button_widget.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -13,9 +14,12 @@ class _NewMapViewState extends State<NewMapView> {
   final Map<String, Marker> _markers = {};
   GoogleMapController? mapController;
   Position? _currentPosition;
+  final startAddressController = TextEditingController();
+  String _currentAddress = '';
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
     mapController = controller;
+    await _getMyPosition();
     // final googleOffices = await locations.getGoogleOffices();
     // setState(() {
     //   _markers.clear();
@@ -33,6 +37,37 @@ class _NewMapViewState extends State<NewMapView> {
     // });
   }
 
+  Future<void> _getMyPosition() async {
+    await LocationUtils.getCurrentPosition().then((value) {
+      setState(() {
+        _currentPosition = value;
+        mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(value.latitude, value.longitude),
+              zoom: 18.0,
+            ),
+          ),
+        );
+      });
+    });
+  }
+
+  _getAddres() async {
+    var eitherPlace =
+        await LocationUtils.getAddressFromPosition(_currentPosition!);
+    eitherPlace.fold(
+        (error) => null,
+        (place) => _currentAddress =
+            '${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}');
+    startAddressController.text = _currentAddress;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,6 +78,8 @@ class _NewMapViewState extends State<NewMapView> {
           children: [
             GoogleMap(
               onMapCreated: _onMapCreated,
+              myLocationEnabled: true,
+              zoomControlsEnabled: false,
               initialCameraPosition: CameraPosition(
                 target: const LatLng(0, 0),
                 zoom: 2,
@@ -50,22 +87,10 @@ class _NewMapViewState extends State<NewMapView> {
               markers: _markers.values.toSet(),
             ),
             Positioned(
-              bottom: 120,
+              bottom: 20,
               right: 20,
               child: MyLocationButtonWidget(
-                onGetMyLocationSucces: (position) {
-                  setState(() {
-                    _currentPosition = position;
-                    mapController?.animateCamera(
-                      CameraUpdate.newCameraPosition(
-                        CameraPosition(
-                          target: LatLng(position.latitude, position.longitude),
-                          zoom: 18.0,
-                        ),
-                      ),
-                    );
-                  });
-                },
+                onTap: _getMyPosition,
               ),
             ),
           ],

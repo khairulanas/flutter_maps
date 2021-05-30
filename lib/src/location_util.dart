@@ -1,7 +1,9 @@
+import 'package:dartz/dartz.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationUtils {
-  static Future<Position> determinePosition() async {
+  static Future<Position> getCurrentPosition() async {
     bool serviceEnabled;
     LocationPermission permission;
     // Test if location services are enabled.
@@ -34,5 +36,19 @@ class LocationUtils {
     // When we reach here, permissions are granted and we can
     // continue accessing the position of the device.
     return await Geolocator.getCurrentPosition();
+  }
+
+  static Future<Either<String, Placemark>> getAddressFromPosition(
+      Position position) async {
+    try {
+      var p =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+      // Taking the most probable result
+      var place = p[0];
+      return right(place);
+    } catch (e) {
+      print(e);
+      return left(e.toString());
+    }
   }
 }
