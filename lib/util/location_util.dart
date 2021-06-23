@@ -1,6 +1,11 @@
-import 'package:dartz/dartz.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+
+class MyLocationModel {
+  const MyLocationModel(this.position, this.placemark);
+  final Position position;
+  final Placemark placemark;
+}
 
 class LocationUtils {
   static Future<Position> getCurrentPosition() async {
@@ -38,17 +43,16 @@ class LocationUtils {
     return await Geolocator.getCurrentPosition();
   }
 
-  static Future<Either<String, Placemark>> getAddressFromPosition(
+  static Future<List<Placemark>> getListAddressFromPosition(
       Position position) async {
     try {
       var p =
           await placemarkFromCoordinates(position.latitude, position.longitude);
-      // Taking the most probable result
-      var place = p[0];
-      return right(place);
+      print(p);
+      return p;
     } catch (e) {
       print(e);
-      return left(e.toString());
+      return [];
     }
   }
 }
